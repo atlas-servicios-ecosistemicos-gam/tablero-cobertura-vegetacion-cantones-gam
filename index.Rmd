@@ -1,0 +1,264 @@
+---
+title: "Cobertura de vegetación por cantón en la GAM"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+---
+
+```{r setup, include=FALSE}
+#-------------------- Paquetes --------------------
+
+library(flexdashboard)
+library(dplyr)
+library(sf)
+library(leaflet)
+library(esri2sf)
+library(raster)
+library(plotly)
+
+```
+
+Row {data-height=550}
+-----------------------------------------------------------------------
+
+### Mapa {data-width=600}
+```{r include=FALSE}
+
+#--------- URL de geoservicios y datos ------------
+
+url_agfs_limite_gam <-
+  "https://services9.arcgis.com/RrvMEynxDB8hycVO/arcgis/rest/services/gam_limite_gam/FeatureServer/0"
+url_raster_uso_tierra <-
+  "https://raw.githubusercontent.com/atlas-servicios-ecosistemicos-gam/datos/master/uso-tierra/gam/USO_COBERTURA_GAM_WEB.tif"
+
+#--------------- Objetos sf y raster --------------
+
+# Límite de la GAM
+sf_limite_gam <- 
+  esri2sf(url_agfs_limite_gam)
+
+# Límite de la GAM (reproyectada a Web Mercator)
+sf_limite_gam_web <- 
+  sf_limite_gam %>%
+  st_transform(3857)
+
+# Capa raster de uso de la tierra (en Web Mercator)
+raster_uso_tierra <-
+  raster(url_raster_uso_tierra) %>%
+  crop(sf_limite_gam_web) %>%
+  mask(sf_limite_gam_web)
+
+#---------------- Paletas de colores ---------------
+
+colores_uso_tierra <- 
+  c(rgb(2,217,214,  maxColorValue=255), rgb(0,204,242,  maxColorValue=255), 
+    rgb(145,172,128,maxColorValue=255), rgb(106,142,88, maxColorValue=255),
+    rgb(125,106,69, maxColorValue=255), rgb(88,54,51,   maxColorValue=255),
+    rgb(249,216,87, maxColorValue=255), rgb(255,252,138,maxColorValue=255)
+  )
+
+etiquetas_uso_tierra <- 
+  c("Zonas urbanas continuas y discontinuas", "Aguas continentales", 
+    "Bosque secundario temprano", "Bosque secundario medio y tardío",
+    "Café", "Fresas, flores y ornamentales", 
+    "Hortalizas, raíces y tubérculos", "Pastos con árboles y limpios"
+  )
+
+values_uso_tierra <- c(1, 2, 3, 4, 5, 6, 7, 8)
+
+pal <- colorFactor(
+  palette = colores_uso_tierra, 
+  domain = values_uso_tierra,
+  na.color = "transparent"
+)
+
+```
+
+```{r}
+
+#------------------- Mapa ------------------
+
+leaflet() %>%
+  setView((-84.11961 + -83.97383)/2, (9.907672 + 9.94576)/2, 10) %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik, group = "OpenStreetMap") %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Stamen Toner Lite") %>%
+  addProviderTiles(providers$CartoDB.DarkMatter, group = "CartoDB Dark Matter") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Imágenes de ESRI") %>%
+  addPolygons(
+    data = sf_limite_gam,
+    color = "Purple",
+    fillColor = "transparent",
+    stroke = TRUE,
+    weight = 6.0,
+    group = "Límite de la GAM"
+  ) %>%
+  addRasterImage(
+    raster_uso_tierra,
+    colors = pal,
+    opacity = 1,
+    group = "Uso de la tierra"
+  ) %>%
+  addLegend(
+    title = "Uso de la tierra",
+    position = "bottomright",
+    colors = colores_uso_tierra,
+    labels = etiquetas_uso_tierra,
+    group = "Uso de la tierra"
+  ) %>%
+  addLayersControl(
+    baseGroups = c("OpenStreetMap", "Stamen Toner Lite", "CartoDB Dark Matter", "Imágenes de ESRI"),
+    overlayGroups = c("Límite de la GAM", "Uso de la tierra"),
+    options = layersControlOptions(collapsed = TRUE)    
+  ) %>%  
+  addMiniMap(
+    toggleDisplay = TRUE,
+    position = "bottomleft",
+    tiles = providers$OpenStreetMap.Mapnik,
+    minimized = TRUE
+  ) %>%
+  addScaleBar(
+    position = "bottomleft",
+    options = scaleBarOptions(imperial = FALSE)
+  )
+
+```
+
+### San José {data-width=200}
+```{r}
+
+# Vector de nombres de cantones
+cantones <- 
+  c("Mora", "Aserrí", "Desamparados", "Alajuelita", 
+    "Santa Ana", "Coronado", "Escazú", "Goicochea", 
+    "Moravia", "Montes de Oca", "Curridabat", "Tibás", 
+    "San José")
+
+# Vector de coberturas
+coberturas <- 
+  c(79.2, 65.5, 57.4, 57.3, 
+    51.8, 49.8, 48.4, 43.1, 
+    42.0, 41.2, 20.8, 10.6,
+    9.5)
+
+cantones_cobertura <- 
+  data.frame(
+    canton = cantones, 
+    cobertura = coberturas
+  )
+
+cantones_cobertura %>%
+DT::datatable(
+  colnames = c("Cantón", "Cobertura"),
+  rownames = FALSE,
+  options = list(dom = 't')
+)
+
+```
+
+### Heredia {data-width=200}
+```{r}
+
+# Vector de nombres cantones
+cantones <- 
+  c("Barva", "San Rafael", "Santa Bárbara", "San Isidro", 
+    "Santo Domingo", "San Pablo", "Flores", "Belén", 
+    "Heredia")
+
+# Vector de coberturas
+coberturas <- 
+  c(57.7, 54.9, 52.7, 47.4, 
+    27.7, 21.5, 15.0, 13.3, 
+    9.8)
+
+cantones_cobertura <- 
+  data.frame(
+    canton = cantones, 
+    cobertura = coberturas
+  )
+
+cantones_cobertura %>%
+DT::datatable(
+  colnames = c("Cantón", "Cobertura"),
+  rownames = FALSE,
+  options = list(dom = 't')
+)
+
+```
+
+Row {data-height=450}
+-----------------------------------------------------------------------
+
+### Cobertura mínima {.value-box} {data-width=200}
+```{r}
+valueBox(value = "9.5%", 
+  caption = "<h3>Cobertura mínima</h3><br><h4>San José</h4>"
+)
+```
+
+### Cobertura máxima {.value-box} {data-width=200}
+```{r}
+valueBox(value = "80.9%", 
+  caption = "<h3>Cobertura máxima</h3><br><h4>El Guarco</h4>"
+)
+```
+
+### Cobertura promedio {.value-box} {data-width=200}
+```{r}
+valueBox(value = "42.5%", 
+  caption = "<h3>Cobertura promedio</h3>"
+)
+```
+
+### Cartago {data-width=200}
+```{r}
+
+# Vector de nombres de cantones
+cantones <- 
+  c("El Guarco", "Paraíso", "Cartago", "La Unión", 
+    "Alvarado", "Oreamuno")
+
+# Vector de coberturas
+coberturas <- 
+  c(80.9, 69.1, 62.2, 57.2, 
+    33.1, 31.1)
+
+cantones_cobertura <- 
+  data.frame(
+    canton = cantones, 
+    cobertura = coberturas
+  )
+
+cantones_cobertura %>%
+DT::datatable(
+  colnames = c("Cantón", "Cobertura"),
+  rownames = FALSE,
+  options = list(dom = 't')
+)
+
+```
+
+### Alajuela {data-width=200}
+```{r}
+
+# Vector de nombres cantones
+cantones <- 
+  c("Atenas", "Alajuela", "Poás")
+
+# Vector de coberturas
+coberturas <- 
+  c(49.8, 28.7, 28.6)
+
+cantones_cobertura <- 
+  data.frame(
+    canton = cantones, 
+    cobertura = coberturas
+  )
+
+cantones_cobertura %>%
+DT::datatable(
+  colnames = c("Cantón", "Cobertura"),
+  rownames = FALSE,
+  options = list(dom = 't')
+)
+
+```
