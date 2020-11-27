@@ -4,7 +4,7 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
 ---
-
+Servicio ecosistémico de regulación: Moderación de los extremos del clima
 ```{r setup, include=FALSE}
 #-------------------- Paquetes --------------------
 
@@ -145,7 +145,7 @@ cantones_cobertura %>%
 DT::datatable(
   colnames = c("Cantón", "Cobertura"),
   rownames = FALSE,
-  options = list(dom = 't')
+  options = list(pageLength = 15, dom = 't')
 )
 
 ```
