@@ -100,7 +100,7 @@ leaflet() %>%
   ) %>%
   addLegend(
     title = "Uso de la tierra",
-    position = "bottomright",
+    position = "bottomleft",
     colors = colores_uso_tierra,
     labels = etiquetas_uso_tierra,
     group = "Uso de la tierra"
@@ -110,16 +110,11 @@ leaflet() %>%
     overlayGroups = c("Límite de la GAM", "Uso de la tierra"),
     options = layersControlOptions(collapsed = TRUE)    
   ) %>%  
-  addMiniMap(
-    toggleDisplay = TRUE,
-    position = "bottomleft",
-    tiles = providers$OpenStreetMap.Mapnik,
-    minimized = TRUE
-  ) %>%
   addScaleBar(
-    position = "bottomleft",
+    position = "bottomright",
     options = scaleBarOptions(imperial = FALSE)
-  )
+  ) %>%
+  hideGroup("Uso de la tierra")
 
 ```
 
