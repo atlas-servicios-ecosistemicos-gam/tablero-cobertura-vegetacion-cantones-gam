@@ -12,6 +12,7 @@ library(flexdashboard)
 library(dplyr)
 library(sf)
 library(leaflet)
+library(leafem)
 library(esri2sf)
 library(raster)
 library(plotly)
@@ -79,7 +80,7 @@ pal <- colorFactor(
 #------------------- Mapa ------------------
 
 leaflet() %>%
-  setView((-84.11961 + -83.97383)/2, (9.907672 + 9.94576)/2, 10) %>%
+  setView(-84.15, (9.907672 + 9.94576)/2, 10) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik, group = "OpenStreetMap") %>%
   addProviderTiles(providers$Stamen.TonerLite, group = "Stamen Toner Lite") %>%
   addProviderTiles(providers$CartoDB.DarkMatter, group = "CartoDB Dark Matter") %>%
@@ -114,8 +115,7 @@ leaflet() %>%
     position = "bottomright",
     options = scaleBarOptions(imperial = FALSE)
   ) %>%
-  hideGroup("Uso de la tierra")
-
+  addMouseCoordinates()
 ```
 
 ### San José {data-width=200}
